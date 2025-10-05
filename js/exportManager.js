@@ -11,15 +11,19 @@ class ExportManager {
         if (this.isLoading) return;
         this.isLoading = true;
         try {
-            console.log('🔄 Начинаем загрузку FFmpeg...');
-            // Проверяем разные способы загрузки FFmpeg
-            if (typeof FFmpeg !== 'undefined') {
-                await this.loadFromGlobal();
-            } else if (typeof createFFmpeg !== 'undefined') {
-                await this.loadFromCreateFFmpeg();
-            } else {
-                await this.loadFromCDN();
+            console.log('🔄 Загружаем FFmpeg из CDN (версия 0.11.6)...');
+            await this.loadScript('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
+            if (typeof createFFmpeg === 'undefined') {
+                throw new Error('FFmpeg не загрузился из CDN');
             }
+            this.ffmpeg = createFFmpeg({
+                log: true,
+                corePath: 'https://unpkg.com/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
+            });
+            await this.ffmpeg.load();
+            this.isFFmpegLoaded = true;
+            this.isLoading = false;
+            console.log('✅ FFmpeg успешно загружен');
         } catch (error) {
             console.error('❌ Ошибка загрузки FFmpeg:', error);
             this.isFFmpegLoaded = false;
@@ -27,47 +31,6 @@ class ExportManager {
             this.showFFmpegError();
         }
     }
-
-async loadFromGlobal() {
-    console.log('📦 Загружаем FFmpeg из глобальной переменной...');
-    const { createFFmpeg } = FFmpeg;
-    this.ffmpeg = createFFmpeg({ 
-        log: true,
-        corePath: 'https://unpkg.com/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
-    });
-    await this.ffmpeg.load();
-    this.isFFmpegLoaded = true;
-    this.isLoading = false;
-    console.log('✅ FFmpeg загружен из глобальной переменной');
-}
-
-async loadFromCreateFFmpeg() {
-    console.log('📦 Загружаем FFmpeg из createFFmpeg...');
-    this.ffmpeg = createFFmpeg({ 
-        log: true,
-        corePath: 'https://unpkg.com/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
-    });
-    await this.ffmpeg.load();
-    this.isFFmpegLoaded = true;
-    this.isLoading = false;
-    console.log('✅ FFmpeg загружен из createFFmpeg');
-}
-
-async loadFromCDN() {
-    console.log('📦 Загружаем FFmpeg из CDN...');
-    await this.loadScript('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
-    if (typeof createFFmpeg === 'undefined') {
-        throw new Error('FFmpeg не загрузился из CDN');
-    }
-    this.ffmpeg = createFFmpeg({ 
-        log: true,
-        corePath: 'https://unpkg.com/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
-    });
-    await this.ffmpeg.load();
-    this.isFFmpegLoaded = true;
-    this.isLoading = false;
-    console.log('✅ FFmpeg загружен из CDN');
-}
 
     loadScript(src) {
         return new Promise((resolve, reject) => {
@@ -82,13 +45,13 @@ async loadFromCDN() {
     showFFmpegError() {
         console.error('❌ FFmpeg не удалось загрузить. Проверьте подключение к интернету.');
         if (typeof this.onError === 'function') {
-            this.onError('Не удалось загрузить видеодвижок. Проверьте подключение к интернету и обновите страницу.');
+            this.onError('Не удалось загрузить видеодвижок. Убедитесь, что у вас есть интернет, и обновите страницу.');
         }
     }
 
     async waitForLoad() {
         if (this.isFFmpegLoaded) return true;
-        const maxWaitTime = 20000; // 20 секунд
+        const maxWaitTime = 20000;
         const startTime = Date.now();
         while (!this.isFFmpegLoaded && (Date.now() - startTime) < maxWaitTime) {
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -104,23 +67,15 @@ async loadFromCDN() {
         try {
             const isLoaded = await this.waitForLoad();
             if (!isLoaded) {
-                throw new Error(`
-                    FFmpeg не загрузился. Возможные причины:
-                    1. Плохое интернет-соединение
-                    2. Браузер блокирует загрузку скриптов
-                    3. Недостаточно памяти
-                    Пожалуйста, обновите страницу и попробуйте снова.
-                `);
+                throw new Error('FFmpeg не загрузился. Проверьте интернет и обновите страницу.');
             }
 
-            if (videoFile.size > 500 * 1024 * 1024) { // 500MB
+            if (videoFile.size > 500 * 1024 * 1024) {
                 const shouldContinue = confirm(
                     `Видео очень большое (${this.formatFileSize(videoFile.size)}). ` +
-                    `Нарезка может занять несколько минут и использовать много памяти. Продолжить?`
+                    `Нарезка может занять несколько минут. Продолжить?`
                 );
-                if (!shouldContinue) {
-                    throw new Error('Отменено пользователем');
-                }
+                if (!shouldContinue) throw new Error('Отменено пользователем');
             }
 
             const results = [];
@@ -131,7 +86,7 @@ async loadFromCDN() {
                     const result = await this.processSingleSegment(videoFile, segment, i + 1);
                     results.push(result);
                 } catch (error) {
-                    console.error(`❌ Ошибка при обработке сегмента ${i + 1}:`, error);
+                    console.error(`❌ Ошибка сегмента ${i + 1}:`, error.message);
                     results.push({
                         success: false,
                         segment: segment,
@@ -147,16 +102,8 @@ async loadFromCDN() {
     }
 
     async processSingleSegment(videoFile, segment, index) {
-        if (!this.ffmpeg) {
-            throw new Error('FFmpeg не инициализирован');
-        }
-
-        if (segment.duration <= 0) {
-            throw new Error('Некорректная длительность сегмента');
-        }
-        if (segment.duration > 300) {
-            console.warn('⚠️ Сегмент очень длинный, обработка может занять время');
-        }
+        if (!this.ffmpeg) throw new Error('FFmpeg не инициализирован');
+        if (segment.duration <= 0) throw new Error('Некорректная длительность сегмента');
 
         try {
             const arrayBuffer = await this.readFileAsArrayBuffer(videoFile);
@@ -172,9 +119,7 @@ async loadFromCDN() {
             );
 
             const data = this.ffmpeg.FS('readFile', `segment_${index}.mp4`);
-            if (data.length === 0) {
-                throw new Error('Получен пустой файл');
-            }
+            if (data.length === 0) throw new Error('Пустой результат');
 
             const blob = new Blob([data.buffer], { type: 'video/mp4' });
             const url = URL.createObjectURL(blob);
@@ -205,18 +150,15 @@ async loadFromCDN() {
         filenames.forEach(filename => {
             try {
                 this.ffmpeg.FS('unlink', filename);
-            } catch (error) {
-                console.warn(`Не удалось удалить файл ${filename}:`, error);
+            } catch (e) {
+                console.warn(`Не удалён: ${filename}`);
             }
         });
     }
 
+    // Вспомогательные методы
     exportMarkers(markers) {
-        const data = JSON.stringify({
-            markers: markers,
-            exportDate: new Date().toISOString(),
-            version: '1.0'
-        }, null, 2);
+        const data = JSON.stringify({ markers, exportDate: new Date().toISOString(), version: '1.0' }, null, 2);
         this.downloadFile(data, `video_markers_${this.formatTimestamp()}.json`, 'application/json');
     }
 
@@ -228,16 +170,13 @@ async loadFromCDN() {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (event) => {
+                reader.onload = (ev) => {
                     try {
-                        const data = JSON.parse(event.target.result);
-                        if (data.markers && Array.isArray(data.markers)) {
-                            callback(data.markers);
-                        } else {
-                            alert('Неверный формат файла маркеров');
-                        }
-                    } catch (error) {
-                        alert('Ошибка при чтении файла: ' + error.message);
+                        const d = JSON.parse(ev.target.result);
+                        if (d.markers && Array.isArray(d.markers)) callback(d.markers);
+                        else alert('Неверный формат файла');
+                    } catch (err) {
+                        alert('Ошибка чтения: ' + err.message);
                     }
                 };
                 reader.readAsText(file);
@@ -247,8 +186,8 @@ async loadFromCDN() {
     }
 
     downloadSegmentsInfo(segments) {
-        const content = segments.map((seg, index) => 
-            `Сегмент ${index + 1}: ${seg.startFormatted} - ${seg.endFormatted} (длительность: ${this.formatDuration(seg.duration)})`
+        const content = segments.map((s, i) =>
+            `Сегмент ${i + 1}: ${s.startFormatted} - ${s.endFormatted} (${this.formatDuration(s.duration)})`
         ).join('\n');
         this.downloadFile(content, `video_segments_${this.formatTimestamp()}.txt`, 'text/plain');
     }
@@ -285,11 +224,7 @@ async loadFromCDN() {
 
     destroy() {
         if (this.ffmpeg) {
-            try {
-                this.ffmpeg.exit();
-            } catch (error) {
-                console.warn('Ошибка при завершении FFmpeg:', error);
-            }
+            try { this.ffmpeg.exit(); } catch (e) { console.warn('FFmpeg exit error:', e); }
         }
     }
 }
