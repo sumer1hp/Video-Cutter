@@ -12,12 +12,10 @@ async loadFFmpeg() {
     this.isLoading = true;
     try {
         console.log('🔄 Загружаем FFmpeg из CDN (jsDelivr, v0.11.6)...');
-        // Загружаем ffmpeg.min.js с jsDelivr
         await this.loadScript('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
         if (typeof createFFmpeg === 'undefined') {
             throw new Error('FFmpeg не загрузился из CDN');
         }
-        // Используем corePath тоже с jsDelivr — он точно отдаёт CORS-заголовки
         this.ffmpeg = createFFmpeg({
             log: true,
             corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
