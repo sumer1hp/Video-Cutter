@@ -7,40 +7,42 @@ class ExportManager {
         this.loadFFmpeg();
     }
 
-    async loadFFmpeg() {
-        if (this.isLoading) return;
-        this.isLoading = true;
-        try {
-            console.log('🔄 Загружаем FFmpeg из CDN (версия 0.11.6)...');
-            await this.loadScript('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
-            if (typeof createFFmpeg === 'undefined') {
-                throw new Error('FFmpeg не загрузился из CDN');
-            }
-            this.ffmpeg = createFFmpeg({
-                log: true,
-                corePath: 'https://unpkg.com/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
-            });
-            await this.ffmpeg.load();
-            this.isFFmpegLoaded = true;
-            this.isLoading = false;
-            console.log('✅ FFmpeg успешно загружен');
-        } catch (error) {
-            console.error('❌ Ошибка загрузки FFmpeg:', error);
-            this.isFFmpegLoaded = false;
-            this.isLoading = false;
-            this.showFFmpegError();
+async loadFFmpeg() {
+    if (this.isLoading) return;
+    this.isLoading = true;
+    try {
+        console.log('🔄 Загружаем FFmpeg из CDN (jsDelivr, v0.11.6)...');
+        // Загружаем ffmpeg.min.js с jsDelivr
+        await this.loadScript('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
+        if (typeof createFFmpeg === 'undefined') {
+            throw new Error('FFmpeg не загрузился из CDN');
         }
-    }
-
-    loadScript(src) {
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = src;
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
+        // Используем corePath тоже с jsDelivr — он точно отдаёт CORS-заголовки
+        this.ffmpeg = createFFmpeg({
+            log: true,
+            corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
         });
+        await this.ffmpeg.load();
+        this.isFFmpegLoaded = true;
+        this.isLoading = false;
+        console.log('✅ FFmpeg успешно загружен');
+    } catch (error) {
+        console.error('❌ Ошибка загрузки FFmpeg:', error);
+        this.isFFmpegLoaded = false;
+        this.isLoading = false;
+        this.showFFmpegError();
     }
+}
+
+loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
 
     showFFmpegError() {
         console.error('❌ FFmpeg не удалось загрузить. Проверьте подключение к интернету.');
