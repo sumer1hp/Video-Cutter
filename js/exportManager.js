@@ -28,47 +28,46 @@ class ExportManager {
         }
     }
 
-    async loadFromGlobal() {
-        console.log('📦 Загружаем FFmpeg из глобальной переменной...');
-        const { createFFmpeg } = FFmpeg;
-        this.ffmpeg = createFFmpeg({ 
-            log: true,
-            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
-        });
-        await this.ffmpeg.load();
-        this.isFFmpegLoaded = true;
-        this.isLoading = false;
-        console.log('✅ FFmpeg загружен из глобальной переменной');
-    }
+async loadFromGlobal() {
+    console.log('📦 Загружаем FFmpeg из глобальной переменной...');
+    const { createFFmpeg } = FFmpeg;
+    this.ffmpeg = createFFmpeg({ 
+        log: true,
+        corePath: 'https://unpkg.com/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
+    });
+    await this.ffmpeg.load();
+    this.isFFmpegLoaded = true;
+    this.isLoading = false;
+    console.log('✅ FFmpeg загружен из глобальной переменной');
+}
 
-    async loadFromCreateFFmpeg() {
-        console.log('📦 Загружаем FFmpeg из createFFmpeg...');
-        this.ffmpeg = createFFmpeg({ 
-            log: true,
-            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
-        });
-        await this.ffmpeg.load();
-        this.isFFmpegLoaded = true;
-        this.isLoading = false;
-        console.log('✅ FFmpeg загружен из createFFmpeg');
-    }
+async loadFromCreateFFmpeg() {
+    console.log('📦 Загружаем FFmpeg из createFFmpeg...');
+    this.ffmpeg = createFFmpeg({ 
+        log: true,
+        corePath: 'https://unpkg.com/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
+    });
+    await this.ffmpeg.load();
+    this.isFFmpegLoaded = true;
+    this.isLoading = false;
+    console.log('✅ FFmpeg загружен из createFFmpeg');
+}
 
-    async loadFromCDN() {
-        console.log('📦 Загружаем FFmpeg из CDN...');
-        // Используем последнюю версию с UMD-поддержкой
-        await this.loadScript('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
-        if (typeof createFFmpeg === 'undefined') {
-            throw new Error('FFmpeg не загрузился из CDN');
-        }
-        this.ffmpeg = createFFmpeg({ 
-            log: true,
-            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
-        });
-        await this.ffmpeg.load();
-        this.isFFmpegLoaded = true;
-        this.isLoading = false;
-        console.log('✅ FFmpeg загружен из CDN');
+async loadFromCDN() {
+    console.log('📦 Загружаем FFmpeg из CDN...');
+    await this.loadScript('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
+    if (typeof createFFmpeg === 'undefined') {
+        throw new Error('FFmpeg не загрузился из CDN');
     }
+    this.ffmpeg = createFFmpeg({ 
+        log: true,
+        corePath: 'https://unpkg.com/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
+    });
+    await this.ffmpeg.load();
+    this.isFFmpegLoaded = true;
+    this.isLoading = false;
+    console.log('✅ FFmpeg загружен из CDN');
+}
 
     loadScript(src) {
         return new Promise((resolve, reject) => {
