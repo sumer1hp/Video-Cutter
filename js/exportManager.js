@@ -48,7 +48,7 @@ class ExportManager {
         console.log('📦 Загружаем FFmpeg из createFFmpeg...');
         this.ffmpeg = createFFmpeg({ 
             log: true,
-           console.log('После загрузки скрипта: typeof createFFmpeg =', typeof createFFmpeg);
+            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
         });
         await this.ffmpeg.load();
         this.isFFmpegLoaded = true;
@@ -69,7 +69,7 @@ class ExportManager {
         
         this.ffmpeg = createFFmpeg({ 
             log: true,
-            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+           corePath: 'https://unpkg.com/@ffmpeg/core@0.12.4/dist/ffmpeg-core.js'
         });
         
         await this.ffmpeg.load();
