@@ -1,0 +1,162 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.video-container {
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.progress-container {
+    position: relative;
+    margin-top: 10px;
+}
+
+.markers-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    pointer-events: none;
+}
+
+.marker {
+    position: absolute;
+    width: 3px;
+    height: 30px;
+    transform: translateX(-50%);
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.marker.start {
+    background-color: #28a745;
+}
+
+.marker.end {
+    background-color: #dc3545;
+}
+
+.marker:hover::after {
+    content: attr(data-time);
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.markers-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.marker-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    background: #f8f9fa;
+    border-left: 4px solid #28a745;
+}
+
+.marker-item.end {
+    border-left-color: #dc3545;
+}
+
+.marker-time {
+    font-weight: bold;
+    font-family: monospace;
+}
+
+.marker-type {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.marker-type.start {
+    background: #d4edda;
+    color: #155724;
+}
+
+.marker-type.end {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.btn-group .btn {
+    flex: 1;
+}
+
+.action-buttons .btn {
+    margin-bottom: 8px;
+}
+
+.manual-marker-form {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+/* Анимации */
+.marker-item {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 5px;
+    }
+    
+    .video-container {
+        margin: 0 -15px;
+    }
+}
+
+/* Стили для скроллбара */
+.markers-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.markers-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.markers-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.markers-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
