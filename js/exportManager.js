@@ -18,7 +18,7 @@ async loadFFmpeg() {
         }
         this.ffmpeg = createFFmpeg({
             log: true,
-            corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.6/dist/ffmpeg-core.js'
+            corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.min.js'
         });
         await this.ffmpeg.load();
         this.isFFmpegLoaded = true;
